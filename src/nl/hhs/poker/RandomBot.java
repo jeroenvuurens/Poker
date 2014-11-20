@@ -1,10 +1,9 @@
 package nl.hhs.poker;
 
 import java.util.Random;
-import nl.hhs.poker.Deck;
 
 /**
- *
+ * Computer Player that plays randomly
  * @author jeroen
  */
 public class RandomBot extends Player {

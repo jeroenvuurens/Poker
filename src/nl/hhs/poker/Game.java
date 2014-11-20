@@ -1,4 +1,3 @@
-//class represents the minimal poker game
 package nl.hhs.poker;
 
 import java.util.ArrayList;
@@ -7,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import nl.hhs.poker.Card;
-import nl.hhs.poker.Deck;
 
 /**
  * All players are dealt 2 cards they hold in hand and how to noone. For a true
@@ -24,12 +21,13 @@ import nl.hhs.poker.Deck;
  * five cards on the table wins. In rare situations a tie gives multiple winners
  * who split the prize money.
  * <p/>
- * 
+ *
  */
 public final class Game {
 
     private static final int COMMUNITY_CARDS = 5;
     private final Deck deck;
+    private TreeMap<ComparableHand, Player> showdown;
     private final ArrayList<Card> communitycards = new ArrayList();
     private final ArrayList<Player> playersLeftInGame;
     private final HashMap<Player, Event> lastEvent = new HashMap();
@@ -55,14 +53,14 @@ public final class Game {
             player.setHand(this, hand);
         }
     }
-    
+
     /**
-     * @return List of all players 
+     * @return List of all players
      */
     public ArrayList<Player> getPlayers() {
         return new ArrayList(lastEvent.keySet());
     }
-    
+
     /**
      * Add an event to history, and sets it as lastevent for the player. The
      * events contain information on bets made, money put in by binds, player
@@ -105,12 +103,12 @@ public final class Game {
      */
     private final void setBlinds() {
         blind = 100 * (int) Math.pow(2, 6 - playersLeftInGame.size());
-        
+
         // big blind is the last player to bet
         bigblind = playersLeftInGame.get(playersLeftInGame.size() - 1);
         // small blind is the prior to last player to bet
         smallblind = playersLeftInGame.get(playersLeftInGame.size() - 2);
-        
+
         addEvent(smallblind, EVENTTYPE.SMALLBLIND, Math.min(smallblind.cashOwned(), blind));
         addEvent(bigblind, EVENTTYPE.BIGBLIND, Math.min(bigblind.cashOwned(), blind * 2));
     }
@@ -155,9 +153,7 @@ public final class Game {
             while (playersLeftInGame.size() > 1) {
                 // remove player from list
                 Player player = playersLeftInGame.remove(0);
-                if (playerThatLastRaised == null) {
-                    playerThatLastRaised = player;
-                } else if (playerThatLastRaised == player) {
+                if (playerThatLastRaised == player) {
                     // if this player is the last player that raised, this bidding
                     // round is over
                     playersLeftInGame.add(player);
@@ -172,7 +168,7 @@ public final class Game {
                 } else {
                     int raise = player.raise(gameBidLevel);
                     // a player cannot bet more than they have
-                    int newPlayerBidLevel = Math.min(playerLastBidLevel + raise, playerCashAmount);
+                    int newPlayerBidLevel = (int) Math.min((long) playerLastBidLevel + raise, playerCashAmount);
                     if (newPlayerBidLevel == playerCashAmount) {
                         //  is all in
                         playersLeftInGame.add(player);
@@ -187,10 +183,15 @@ public final class Game {
                         // pass or call
                     } else {
                         addEvent(player, EVENTTYPE.RAISE, newPlayerBidLevel);
-                        gameBidLevel = newPlayerBidLevel;
-                        playerThatLastRaised = player;
                         playersLeftInGame.add(player);
                         // player raises
+                    }
+                    if (playerThatLastRaised == null && newPlayerBidLevel >= gameBidLevel) {
+                        playerThatLastRaised = player;
+                    }
+                    if (newPlayerBidLevel > gameBidLevel) {
+                        playerThatLastRaised = player;
+                        gameBidLevel = newPlayerBidLevel;
                     }
                 }
             }
@@ -220,7 +221,10 @@ public final class Game {
         int maxBidLevel = getMaxBidLevel();
         for (Player player : playersLeftInGame) {
             Event event = lastEvent.get(player);
-            if (event != null && event.type != EVENTTYPE.ALLIN && maxBidLevel < player.cashOwned()) {
+            if (event == null) {
+                return true;
+            }
+            if (event.type != EVENTTYPE.ALLIN && maxBidLevel < player.cashOwned()) {
                 count++;
             }
         }
@@ -251,7 +255,7 @@ public final class Game {
     }
 
     public ArrayList<Event> getEventHistory() {
-        return (ArrayList<Event>) eventHistory.clone();
+        return (ArrayList) eventHistory.clone();
     }
 
     /**
@@ -269,7 +273,7 @@ public final class Game {
      * hand. This best combination is used to determine the winner.
      */
     public ArrayList<Card> getCommunityCards() {
-        return (ArrayList<Card>) communitycards.clone();
+        return (ArrayList) communitycards.clone();
     }
 
     /**
@@ -286,33 +290,36 @@ public final class Game {
      * events.
      */
     public TreeMap<ComparableHand, Player> getShowDown() {
-        TreeMap<ComparableHand, Player> showdown = new TreeMap();
-        if (playersLeftInGame.size() == 1) {
-            cashToWinner(playersLeftInGame.get(0));
-        } else {
-            isshowdown = true; // so players show their cards
-            for (Player p : playersLeftInGame) {
-                ComparableHand comparableHand = new ComparableHand(this, p.giveHand());
-                showdown.put(comparableHand, p);
-            }
-            TreeMap<ComparableHand, Player> winners = new TreeMap(showdown);
-            ComparableHand firsthand = winners.firstKey();
-            while (winners.lastEntry().getKey().compareTo(firsthand) > 0) {
-                winners.remove(winners.lastKey());
-            }
-            if (winners.size() == 1) {
-                cashToWinner(winners.firstEntry().getValue());
+        if (showdown == null) {
+            showdown = new TreeMap();
+            if (playersLeftInGame.size() == 1) {
+                cashToWinner(playersLeftInGame.get(0));
             } else {
-                splitPot(winners);
+                isshowdown = true; // so players show their cards
+                for (Player p : playersLeftInGame) {
+                    ComparableHand comparableHand = new ComparableHand(this, p.giveHand());
+                    showdown.put(comparableHand, p);
+                }
+                TreeMap<ComparableHand, Player> winners = new TreeMap(showdown);
+                ComparableHand firsthand = winners.firstKey();
+                while (winners.lastEntry().getKey().compareTo(firsthand) > 0) {
+                    winners.remove(winners.lastKey());
+                }
+                if (winners.size() == 1) {
+                    cashToWinner(winners.firstEntry().getValue());
+                } else {
+                    splitPot(winners);
+                }
             }
         }
         return showdown;
     }
-    
+
     public Player getWinner() {
         for (Event event : lastEvent.values()) {
-            if (event.type == EVENTTYPE.WIN)
+            if (event.type == EVENTTYPE.WIN) {
                 return event.player;
+            }
         }
         return null;
     }
@@ -326,17 +333,19 @@ public final class Game {
      */
     private void cashToWinner(Player winner) {
         int maxbet = lastEvent.get(winner).bidLevel;
+        int prizemoney = 0;
         for (Event event : lastEvent.values()) {
             if (event.player != winner) {
                 Player loser = event.player;
                 int amount = Math.min(event.bidLevel, maxbet);
                 loser.transferCash(new CashTransfer(loser, -amount));
+                prizemoney += amount;
             }
         }
-
+        winner.transferCash(new CashTransfer(winner, prizemoney));
         addEvent(winner, EVENTTYPE.WIN, maxbet);
     }
-    
+
     /**
      * When multiple winners tie, the winnings are split by the joint winners. A
      * slight complication is that when players went all-in with an amount that
@@ -365,8 +374,9 @@ public final class Game {
                 split = 0;
                 for (Player player : winners.values()) {
                     int playerBet = lastEvent.get(player).bidLevel;
-                    if (playerBet >= winamount)
+                    if (playerBet >= winamount) {
                         split++;
+                    }
                 }
                 for (Map.Entry<Player, Integer> owe : owing.entrySet()) {
                     int amount = Math.min(owe.getValue(), winamount - amountAlreadyTaken);
@@ -397,11 +407,12 @@ public final class Game {
             loser.transferCash(new CashTransfer(loser, amountToPay));
         }
     }
-    
+
     protected final class CashTransfer {
+
         final int amount;
         final Player player;
-        
+
         private CashTransfer(Player player, int amount) {
             this.player = player;
             this.amount = amount;

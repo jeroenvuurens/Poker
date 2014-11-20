@@ -3,50 +3,39 @@ package nl.hhs.poker;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
-import nl.hhs.poker.Card;
-import nl.hhs.poker.Card;
 
 public class Match {
     // An ArrayDeque is used to easily rotate the button (Player to bet first) between games
     private ArrayList<Player> playersLeftInGame;
     
-    public Match(ArrayList<Player> players) throws ClassNotFoundException {
+    public Match(ArrayList<Player> players) {
         playersLeftInGame = new ArrayList(players);
     }
     
-    public void playGame() throws ClassNotFoundException {
+    public ArrayList<Player> getPlayersLeftInMatch() {
+        return (ArrayList)playersLeftInGame.clone();
+    }
+    
+    public Game playGame() {
         Game game = new Game(playersLeftInGame);
 
         // first round of bidding without community cards
         game.bidUntilNoRaise();
-        int lastEventPrinted = printGame(game, 0);
 
         // the Turn: 3 community cards are shown
         game.dealCommunityCards(3);
-        printCommunityCards(game.getCommunityCards());
         game.bidUntilNoRaise();
-        lastEventPrinted = printGame(game, lastEventPrinted);
 
         // the Flop: a fourth community card is shown
         game.dealCommunityCards(4);
-        printCommunityCards(game.getCommunityCards());
         game.bidUntilNoRaise();
-        lastEventPrinted = printGame(game, lastEventPrinted);
 
         // the River: a fifth community card is shown
         game.dealCommunityCards(5);
-        printCommunityCards(game.getCommunityCards());
         game.bidUntilNoRaise();
         
-        TreeMap<ComparableHand, Player> showdown = game.getShowDown();
-        if (game.isShowDown()) {
-            for (Map.Entry<ComparableHand, Player> entry : showdown.entrySet()) {
-                printComparableHand(entry.getValue(), entry.getKey());
-            }
-        }
-        lastEventPrinted = printGame(game, lastEventPrinted);
+        game.getShowDown();
+        return game;
     }
     
     /**
@@ -58,6 +47,7 @@ public class Match {
         Iterator<Player> iterator = playersLeftInGame.iterator();
         while (iterator.hasNext()) {
             Player player = iterator.next();
+            System.out.println(player + " cash=" + player.cashOwned());
             if (player.isBankrupt())
                 iterator.remove();
         }
@@ -69,22 +59,4 @@ public class Match {
         }
     }
     
-    private void printComparableHand(Player player, ComparableHand hand) {
-        System.out.println("Player " + player.toString() + " had " + hand.toString());
-    }
-    
-    private int printGame(Game game, int lastposition) {
-        ArrayList<Event> eventHistory = game.getEventHistory();
-        for (int i = lastposition; i < eventHistory.size(); i++) {
-            Event event = eventHistory.get(i);
-            System.out.println(event);
-        }
-        return eventHistory.size();
-    }
-    
-    private void printCommunityCards(ArrayList<Card> communityCards) {
-        for (Card card : communityCards) {
-            System.out.println("on table " + card);
-        }
-    }   
 }
