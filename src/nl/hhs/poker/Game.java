@@ -57,6 +57,13 @@ public final class Game {
     }
     
     /**
+     * @return List of all players 
+     */
+    public ArrayList<Player> getPlayers() {
+        return new ArrayList(lastEvent.keySet());
+    }
+    
+    /**
      * Add an event to history, and sets it as lastevent for the player. The
      * events contain information on bets made, money put in by binds, player
      * status (e.g. fold, all-in), and when the game is finished the winner(s).
