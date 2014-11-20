@@ -1,9 +1,6 @@
 package nl.hhs.poker;
 
-import nl.hhs.poker.Card;
-import nl.hhs.poker.Card;
-import nl.hhs.poker.Deck;
-import nl.hhs.poker.Deck;
+import java.util.ArrayList;
 
 /**
  * A private Hand of 2 cards, seen only by the player that holds them.
@@ -33,8 +30,8 @@ public final class Hand {
     }
 
     /**
-     * Used to validate hands that are being compared originated from the same
-     * Deck. 
+     * 
+     * @return 
      */
     public Deck getDeck() {
         return deck;

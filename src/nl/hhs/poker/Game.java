@@ -158,7 +158,7 @@ public final class Game {
                 }
                 Event lastPlayerEvent = lastEvent.get(player);
                 int playerCashAmount = player.cashOwned();
-                int playerLastBidLevel = lastPlayerEvent.bidLevel;
+                int playerLastBidLevel = player.getPlayerBidLevel();
                 if (playerCashAmount <= playerLastBidLevel) {
                     playersLeftInGame.add(player);
                     // player is already all in
