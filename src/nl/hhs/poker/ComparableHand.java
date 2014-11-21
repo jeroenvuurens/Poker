@@ -42,7 +42,7 @@ public final class ComparableHand implements Comparable<ComparableHand> {
             throw new RuntimeException("Cannot compare illegal hands");
         }
         ComparableHand h = (ComparableHand) o;
-        if (hand.sameDeck(h.getHand())) {
+        if (!hand.sameDeck(h.getHand())) {
             throw new RuntimeException("Cannot compare hands from different decks");
         }
         int i = h.getRankHand().rank().ordinal() - getRankHand().rank().ordinal();
