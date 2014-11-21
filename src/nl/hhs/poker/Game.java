@@ -3,6 +3,7 @@ package nl.hhs.poker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -148,28 +149,25 @@ public final class Game {
         // the bidLevel is the maximum amount that has been bet by any player, which
         // is what players have to meet to stay in the game, or go all in.
         int gameBidLevel = getMaxBidLevel();
-        Player playerThatLastRaised = null;
+        
         if (moreBidsRequired()) {
-            while (playersLeftInGame.size() > 1) {
+            // number of players that are allowed to bet
+            int lastRaiseCounter = playersLeftInGame.size();
+            while (lastRaiseCounter-- > 0) {
                 // remove player from list
                 Player player = playersLeftInGame.remove(0);
-                if (playerThatLastRaised == player) {
-                    // if this player is the last player that raised, this bidding
-                    // round is over
-                    playersLeftInGame.add(player);
-                    break;
-                }
+
                 Event lastPlayerEvent = lastEvent.get(player);
-                int playerCashAmount = player.chipsOwned();
+                int playerChipsOwned = player.chipsOwned();
                 int playerLastBidLevel = player.getPlayerBidLevel();
-                if (playerCashAmount <= playerLastBidLevel) {
+                if (playerChipsOwned <= playerLastBidLevel) {
                     playersLeftInGame.add(player);
                     // player is already all in
                 } else {
                     int raise = player.raise(gameBidLevel);
                     // a player cannot bet more than they have
-                    int newPlayerBidLevel = (int) Math.min((long) playerLastBidLevel + raise, playerCashAmount);
-                    if (newPlayerBidLevel == playerCashAmount) {
+                    int newPlayerBidLevel = (int) Math.min((long) playerLastBidLevel + raise, playerChipsOwned);
+                    if (newPlayerBidLevel == playerChipsOwned) {
                         //  is all in
                         playersLeftInGame.add(player);
                         addEvent(player, EVENTTYPE.ALLIN, newPlayerBidLevel);
@@ -177,20 +175,18 @@ public final class Game {
                         addEvent(player, EVENTTYPE.FOLD, playerLastBidLevel);
                         // player folds
                     } else if (newPlayerBidLevel == gameBidLevel) {
-                        EVENTTYPE b = (raise == 0) ? EVENTTYPE.PASS : EVENTTYPE.CALL;
-                        addEvent(player, b, newPlayerBidLevel);
+                        EVENTTYPE passOrCall = (raise == 0) ? EVENTTYPE.PASS : EVENTTYPE.CALL;
+                        addEvent(player, passOrCall, newPlayerBidLevel);
                         playersLeftInGame.add(player);
                         // pass or call
                     } else {
+                        // player raises
                         addEvent(player, EVENTTYPE.RAISE, newPlayerBidLevel);
                         playersLeftInGame.add(player);
-                        // player raises
-                    }
-                    if (playerThatLastRaised == null && newPlayerBidLevel >= gameBidLevel) {
-                        playerThatLastRaised = player;
                     }
                     if (newPlayerBidLevel > gameBidLevel) {
-                        playerThatLastRaised = player;
+                        // a player raised so now the other players get one more bet
+                        lastRaiseCounter = playersLeftInGame.size() - 1;
                         gameBidLevel = newPlayerBidLevel;
                     }
                 }
@@ -216,15 +212,17 @@ public final class Game {
      * @return true, if there is more than one player that has not folded and
      * did not go all in. Only then a new round of bids is required.
      */
-    public boolean moreBidsRequired() {
+    private boolean moreBidsRequired() {
+        if (playersLeftInGame.size() < 2)
+            return false;
         int count = 0;
-        int maxBidLevel = getMaxBidLevel();
+        int gameBidLevel = getMaxBidLevel();
         for (Player player : playersLeftInGame) {
-            Event event = lastEvent.get(player);
-            if (event == null) {
+            EVENTTYPE lastEvent = player.getPlayerLastAction();
+            int lastBet = player.getPlayerBidLevel();
+            if (lastEvent != EVENTTYPE.ALLIN && lastBet < gameBidLevel)
                 return true;
-            }
-            if (event.type != EVENTTYPE.ALLIN && maxBidLevel < player.chipsOwned()) {
+            if (gameBidLevel < player.chipsOwned()) {
                 count++;
             }
         }
@@ -263,7 +261,6 @@ public final class Game {
     }
 
     /**
-     * @param player
      * @return last event for a player, with the total amount the player is in
      * for.
      */
@@ -301,6 +298,7 @@ public final class Game {
             } else {
                 isshowdown = true; // so players show their cards
                 for (Player p : playersLeftInGame) {
+                    Hand hand = p.giveHand();
                     ComparableHand comparableHand = new ComparableHand(this, p.giveHand());
                     showdown.put(comparableHand, p);
                 }
@@ -318,7 +316,7 @@ public final class Game {
         }
         return showdown;
     }
-
+    
     /**
      * @return return the Winner of this game, or null if the game has not ended or
      * if there was a tie. In the last case the Events can be checked to see which players

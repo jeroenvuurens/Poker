@@ -14,9 +14,10 @@ public abstract class Player {
    private static final int startAmount = 10000;
    protected static int playerid = 0; 
    private final int id = playerid++;
+   private int bidround;
    private int cash = startAmount;
    
-   protected Game game;
+   protected Game game; // WARNING, may set to private, use getGame() instead
    private Hand hand; // private so no other players can see the players hand
     
    public Player() {
@@ -28,6 +29,7 @@ public abstract class Player {
    public final void setHand(Game game, Hand hand) {
        this.game = game;
        this.hand = hand;
+       this.bidround = 0;
    }
    
    /**
@@ -92,7 +94,16 @@ public abstract class Player {
     * put in by a player, to stay in the game, this must be met or go all in.
     */
    public final int raise(int gameBidLevel) {
-       return raise(gameBidLevel, hand);
+       int raise = raise(gameBidLevel, hand);
+       bidround++;
+       return raise;
+   }
+   
+   /**
+    * @return the number of times the player has made a bid in this game
+    */
+   protected int getRound() {
+       return bidround;
    }
    
    /**

@@ -40,6 +40,9 @@ public class testMatch {
                 System.out.println("Player " + player.toString() + " had " + hand.toString());
             }
         }
+        for (Player player : game.getPlayers()) {
+            System.out.println(player + " cash=" + player.chipsOwned());
+        }
     }
     
     private static void printGameEvents(Game game) {

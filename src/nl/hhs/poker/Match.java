@@ -47,7 +47,6 @@ public class Match {
         Iterator<Player> iterator = playersLeftInGame.iterator();
         while (iterator.hasNext()) {
             Player player = iterator.next();
-            System.out.println(player + " cash=" + player.chipsOwned());
             if (player.isBankrupt())
                 iterator.remove();
         }
@@ -58,5 +57,4 @@ public class Match {
             playersLeftInGame.add(first);
         }
     }
-    
 }

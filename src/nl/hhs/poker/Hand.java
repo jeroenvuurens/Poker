@@ -1,7 +1,5 @@
 package nl.hhs.poker;
 
-import java.util.ArrayList;
-
 /**
  * A private Hand of 2 cards, seen only by the player that holds them.
  * @author jeroen
