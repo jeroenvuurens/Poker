@@ -8,20 +8,16 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import nl.hhs.poker.Card;
-import nl.hhs.poker.Deck;
-import nl.hhs.poker.FACE;
-import nl.hhs.poker.SUIT;
 
 public final class ComparableHand implements Comparable<ComparableHand> {
 
     private final static int MAX_CARD = 7;
-    private final Deck deck;
+    private final Hand hand;
     private RankHand rankhand;
     private final Card cards[];
 
     protected ComparableHand(Game game, Hand hand) {
-        this.deck = hand.getDeck();
+        this.hand = hand;
         ArrayList<Card> cards = new ArrayList(game.getCommunityCards());
         for (Card card : hand.getCards()) {
             cards.add(card);
@@ -36,13 +32,17 @@ public final class ComparableHand implements Comparable<ComparableHand> {
         return clone;
     }
 
+    private Hand getHand() {
+       return hand;
+    }
+        
     @Override
     public int compareTo(ComparableHand o) {
         if (!(o instanceof ComparableHand)) {
             throw new RuntimeException("Cannot compare illegal hands");
         }
         ComparableHand h = (ComparableHand) o;
-        if (h.deck != deck) {
+        if (hand.sameDeck(h.getHand())) {
             throw new RuntimeException("Cannot compare hands from different decks");
         }
         int i = h.getRankHand().rank().ordinal() - getRankHand().rank().ordinal();

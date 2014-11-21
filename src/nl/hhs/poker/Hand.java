@@ -29,11 +29,16 @@ public final class Hand {
         return clone;
     }
 
-    /**
-     * 
-     * @return 
-     */
-    public Deck getDeck() {
+    private Deck getDeck() {
         return deck;
+    }
+    
+    /**
+     * @param hand
+     * @return true if both hands were dealt from the same Deck, used to validate
+     * if no one cheated by using a different Deck.
+     */
+    public boolean sameDeck(Hand hand) {
+        return deck == hand.getDeck();
     }
 }

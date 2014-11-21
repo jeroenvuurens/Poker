@@ -109,8 +109,8 @@ public final class Game {
         // small blind is the prior to last player to bet
         smallblind = playersLeftInGame.get(playersLeftInGame.size() - 2);
 
-        addEvent(smallblind, EVENTTYPE.SMALLBLIND, Math.min(smallblind.cashOwned(), blind));
-        addEvent(bigblind, EVENTTYPE.BIGBLIND, Math.min(bigblind.cashOwned(), blind * 2));
+        addEvent(smallblind, EVENTTYPE.SMALLBLIND, Math.min(smallblind.chipsOwned(), blind));
+        addEvent(bigblind, EVENTTYPE.BIGBLIND, Math.min(bigblind.chipsOwned(), blind * 2));
     }
 
     /**
@@ -160,7 +160,7 @@ public final class Game {
                     break;
                 }
                 Event lastPlayerEvent = lastEvent.get(player);
-                int playerCashAmount = player.cashOwned();
+                int playerCashAmount = player.chipsOwned();
                 int playerLastBidLevel = player.getPlayerBidLevel();
                 if (playerCashAmount <= playerLastBidLevel) {
                     playersLeftInGame.add(player);
@@ -224,7 +224,7 @@ public final class Game {
             if (event == null) {
                 return true;
             }
-            if (event.type != EVENTTYPE.ALLIN && maxBidLevel < player.cashOwned()) {
+            if (event.type != EVENTTYPE.ALLIN && maxBidLevel < player.chipsOwned()) {
                 count++;
             }
         }
@@ -254,6 +254,10 @@ public final class Game {
         }
     }
 
+    /**
+     * @return A List of all events in the current game, allowing to get information
+     * on which player made what actions.
+     */
     public ArrayList<Event> getEventHistory() {
         return (ArrayList) eventHistory.clone();
     }
@@ -315,6 +319,11 @@ public final class Game {
         return showdown;
     }
 
+    /**
+     * @return return the Winner of this game, or null if the game has not ended or
+     * if there was a tie. In the last case the Events can be checked to see which players
+     * tied to win.
+     */
     public Player getWinner() {
         for (Event event : lastEvent.values()) {
             if (event.type == EVENTTYPE.WIN) {

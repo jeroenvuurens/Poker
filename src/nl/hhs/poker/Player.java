@@ -31,7 +31,7 @@ public abstract class Player {
    }
    
    /**
-    * only returns Hand when the game indicates it must be shown for showdown 
+    * @return only returns Hand when the game indicates it must be shown for showdown 
     */
    public final Hand giveHand() {
        if (game.isShowDown(this))
@@ -39,24 +39,49 @@ public abstract class Player {
        return null;
    }
    
+   /**
+    * @return current Game object
+    */
+   public final Game getGame() {
+       return game;
+   }
+   
+   /**
+    * @return total amount this player has bet in the current game 
+    */
    public int getPlayerBidLevel() {
        Event lastEvent = game.getLastEvent(this);
        return lastEvent == null?0:lastEvent.bidLevel;
    }
    
+   /**
+    * @return last EVENTTYPE of this player in the current game or null
+    * if the player has no Event in the current game yet.
+    */
    public EVENTTYPE getPlayerLastAction() {
        Event lastEvent = game.getLastEvent(this);
        return lastEvent == null?null:lastEvent.type;
    }
    
-   public final int cashOwned() {
+   /**
+    * @return cash owned by player, the amount that the player has bet in the
+    * current game has not been subtracted yet (money is payed when game is finished)
+    */
+   public final int chipsOwned() {
        return cash;
    }
    
+   /**
+    * @return true if the player has no chips left 
+    */
    public final boolean isBankrupt() {
        return cash < 1;
    }
    
+   /**
+    * Used internally to let losing players pay bet chips to winning players. Should
+    * never be used by others.
+    */
    public final void transferCash(CashTransfer voucher) {
        if (voucher.player == this)
            cash += voucher.amount;
@@ -77,6 +102,9 @@ public abstract class Player {
     */
    protected abstract int raise(int gameBidLevel, Hand hand);
    
+   /**
+    * @return name of the player 
+    */
    public abstract String name();
    
    @Override
